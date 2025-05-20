@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import { ButtonsBox } from '../Buttons';
 import { Dropdown } from '../Dropdown';
@@ -36,16 +36,16 @@ export function Filtering() {
 
   const { setApiURL } = useData();
 
-  function handleReset() {
+  const handleReset = useCallback(() => {
     setStatus(null);
     setGender(null);
     setSpecies(null);
     setName('');
     setType('');
     setApiURL('https://rickandmortyapi.com/api/character');
-  }
+  }, [setApiURL]);
 
-  function handleApply() {
+  const handleApply = useCallback(() => {
     const params = [];
     if (status) params.push(`status=${encodeURIComponent(status)}`);
     if (gender) params.push(`gender=${encodeURIComponent(gender)}`);
@@ -55,7 +55,11 @@ export function Filtering() {
 
     const query = params.length ? `?${params.join('&')}` : '';
     setApiURL('https://rickandmortyapi.com/api/character' + query);
-  }
+  }, [status, gender, species, name, type, setApiURL]);
+
+  const handleNameChange = useCallback((e) => setName(e.target.value), []);
+
+  const handleTypeChange = useCallback((e) => setType(e.target.value), []);
 
   return (
     <FilterBox>
@@ -77,16 +81,8 @@ export function Filtering() {
         options={optionsSpecies}
         placeholder="Species"
       />
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Name"
-      />
-      <Input
-        value={type}
-        onChange={(e) => setType(e.target.value)}
-        placeholder="Type"
-      />
+      <Input value={name} onChange={handleNameChange} placeholder="Name" />
+      <Input value={type} onChange={handleTypeChange} placeholder="Type" />
       <ButtonsBox onApply={handleApply} onReset={handleReset} />
     </FilterBox>
   );
