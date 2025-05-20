@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import styled from 'styled-components';
 import CardStatus from './CardStatus';
 import CardTitle from './CardTitle';
@@ -10,15 +11,18 @@ export function Card({
   type,
   gender,
   image,
-  onClickHandler
+  onClickHandler,
+  ...rest
 }) {
-  return (
-    <StyledCard onClick={onClickHandler}>
-      <CardImg src={image} alt={name} />
+  const handleClick = useCallback(() => {
+    onClickHandler({ status, name, species, type, gender, image, ...rest });
+  }, [status, name, species, type, gender, image, onClickHandler, rest]);
 
+  return (
+    <StyledCard onClick={handleClick}>
+      <CardImg src={image} alt={name} />
       <CardInfo>
         <CardTitle name={name} gender={gender} />
-
         <CardStatus status={status} species={species} type={type} />
       </CardInfo>
     </StyledCard>

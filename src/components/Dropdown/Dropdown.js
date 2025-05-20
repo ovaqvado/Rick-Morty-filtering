@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
+import { useCallback, useMemo } from 'react';
+
 export const Dropdown = ({
   options = [],
   placeholder = 'Gender',
@@ -28,33 +30,45 @@ export const Dropdown = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const handleSelect = (option) => {
-    setSelected(option);
-    setOpen(false);
-    onChange(option.value);
-  };
+  const handleToggleDropdown = useCallback(() => {
+    setOpen((prev) => !prev);
+  }, []);
 
-  const handleClear = (e) => {
-    e.stopPropagation();
-    setSelected(null);
-    setOpen(false);
-    onChange && onChange(null);
-  };
+  const handleClear = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setSelected(null);
+      setOpen(false);
+      onChange && onChange(null);
+    },
+    [onChange]
+  );
+
+  const handleSelect = useCallback(
+    (option) => {
+      setSelected(option);
+      setOpen(false);
+      onChange(option.value);
+    },
+    [onChange]
+  );
+
+  const optionHandlers = useMemo(() => {
+    const handlers = {};
+    options.forEach((option) => {
+      handlers[option.value] = () => handleSelect(option);
+    });
+
+    return handlers;
+  }, [options, handleSelect]);
 
   return (
     <DropdownContainer ref={ref}>
-      <DropdownSelected onClick={() => setOpen((prev) => !prev)}>
+      <DropdownSelected onClick={handleToggleDropdown}>
         <span>{selected ? selected.label : placeholder}</span>
         <IconsBox>
           {selected ? (
-            <ClearButton
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClear(e);
-              }}
-              title="Clear"
-              tabIndex={-1}
-            >
+            <ClearButton onClick={handleClear} title="Clear" tabIndex={-1}>
               <svg width="16" height="16" viewBox="0 0 16 16">
                 <path
                   d="M4 12L8 8L12 12"
@@ -90,14 +104,11 @@ export const Dropdown = ({
         </IconsBox>
       </DropdownSelected>
       {open && (
-        <DropdownList
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value || null)}
-        >
+        <DropdownList>
           {options.map((option) => (
             <DropdownItem
               key={option.value}
-              onClick={() => handleSelect(option)}
+              onClick={optionHandlers[option.value]}
               selected={selected?.value === option.value}
             >
               {option.label}
@@ -108,7 +119,6 @@ export const Dropdown = ({
     </DropdownContainer>
   );
 };
-
 const DropdownContainer = styled.div`
   @media (min-width: 530px) {
     position: relative;
@@ -173,12 +183,11 @@ const ClearButton = styled.button`
   background: transparent;
   border: none;
   margin-left: 8px;
-  padding: 2px;
   cursor: pointer;
   display: flex;
   align-items: center;
   color: #f5f5f5;
-  transition: color 0.15s;
+  transition: color 0.2s;
   &:hover,
   &:focus {
     color: rgba(131, 191, 70, 1);
